@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>SWAG ERA 6 – Members</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- SFONDO + NUVOLI -->
+  <div class="background-layer">
+    <img src="images/sfondo.png" alt="" class="bg" />
+    
+  </div>
+
+  <div class="page-wrapper">
+    <!-- HEADER: LOGO A SINISTRA, NAV CENTRALE, MENU DESTRA -->
+    <header class="site-header">
+      <div class="header-left">
+        <a href="index.html" class="logo-link">
+          <img src="images/logo.png" alt="SWAG ERA 6" class="logo-img" />
+        </a>
+      </div>
+
+      <nav class="header-center">
+        <a href="index.html" class="nav-btn active">MEMBERS</a>
+        <span class="nav-divider">|</span>
+        <a href="brand6.html" class="nav-btn">BRAND 6</a>
+      </nav>
+
+      <div class="header-right">
+        <button class="menu-button" aria-label="Apri menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </header>
+<!-- NUVOLI DAVANTI (COME NEL PDF) -->
+      <img src="images/nuvola.png" alt="" class="cloud-foreground cloud-foreground-left" />
+      <img src="images/nuvola2.png" alt="" class="cloud-foreground cloud-foreground-right" />
+    <!-- STAGE CENTRALE: 669 + ARTISTI + NUVOLI DAVANTI -->
+    <main class="main-stage">
+      <section class="artists-strip" id="artists-strip">
+        <!-- ARTISTA SINISTRA – NUMERO 6 -->
+        <article class="artist-card" data-artist="artist1">
+          
+          <div class="artist-photo">
+            <img src="images/pic_ramon.png" alt="Artist 1" />
+          </div>
+        </article>
+
+        <!-- ARTISTA CENTRALE – NUMERO 6 -->
+        <article class="artist-card" data-artist="artist2">
+          
+          <div class="artist-photo">
+            <img src="images/pic_divi.png" alt="Artist 2" />
+          </div>
+        </article>
+
+        <!-- ARTISTA DESTRA – NUMERO 9 -->
+        <article class="artist-card" data-artist="artist3">
+         
+          <div class="artist-photo">
+            <img src="images/ph_bxnsy_3.png" alt="Artist 3" />
+          </div>
+        </article>
+      </section>
+
+      
+    </main>
+
+    <footer class="site-footer">
+      <!-- footer che compilerai tu -->
+    </footer>
+  </div>
+
+  <!-- POPUP MUSIC -->
+  <div class="popup-backdrop" id="artist-popup">
+    <div class="popup-window" id="popup-window">
+      <button class="popup-close" id="popup-close" aria-label="Chiudi popup">
+        <span class="close-line close-line-1"></span>
+        <span class="close-line close-line-2"></span>
+      </button>
+
+      <div class="popup-inner">
+        <header class="popup-header">
+			<h1 class="popup-artist-name-big" id="popup-artist-name-big"></h1>
+          <div class="popup-title">MUSIC</div>
+        </header>
+
+        <section class="popup-content">
+          
+          <div class="popup-grid" id="popup-grid">
+			  
+            <!-- card generate da JS -->
+          </div>
+			
+			<!-- BIO -->
+<h2 class="popup-section-title">BIO</h2>
+<div class="popup-artist-bio" id="popup-artist-bio"></div>
+
+<!-- SOCIAL -->
+<h2 class="popup-section-title">SOCIAL</h2>
+<div class="popup-artist-social" id="popup-artist-social"></div>
+
+        </section>
+		  <!-- OVERLAY INTERNO PER LE PIATTAFORME -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU LATERALE -->
+  <div id="menu-popup" class="menu-popup">
+    <div class="menu-popup-inner">
+      <button id="menu-close" class="menu-close">
+        <span></span><span></span>
+      </button>
+
+      <nav class="menu-links">
+        <a href="members.html">MEMBERS</a>
+        <a href="brand6.html">BRAND 6</a>
+        <a href="https://instagram.com" target="_blank">INSTAGRAM</a>
+        <a href="mailto:info@swagera6.com">CONTACT</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- TOGGLE MOTION DA TELEFONO -->
+  <button id="motion-toggle" class="motion-toggle">MOTION: ON</button>
+
+  <script src="script.js"></script>
+</body>
+</html>
