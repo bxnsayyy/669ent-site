@@ -1,5 +1,141 @@
+// -------------------------------------------------------------
+// CONFIG DATI
+// -------------------------------------------------------------
 
-// NUVOLE: velocità leggermente random --------------------------
+// ID del tuo Google Sheet
+const SHEET_ID = "1gDyVQ3bpzlY8EjGtr7KClyn3x5ZPU9sQJYkYclNZIOE";
+
+// oggetto che conterrà gli artisti
+let ARTISTS = {};
+
+// immagine di sfondo per il movimento
+const bgImage = document.querySelector(".bg-image");
+
+// -------------------------------------------------------------
+// AVVIO
+// -------------------------------------------------------------
+
+document.addEventListener("DOMContentLoaded", () => {
+  main();
+});
+
+async function main() {
+  await initData();              // carica JSON + Sheet
+
+  initCloudRandomSpeed();
+  initArtistsClick();
+  initPopup();
+  initMotionToggle();
+  initMenuPopup();
+}
+
+// -------------------------------------------------------------
+// CARICAMENTO DATI (JSON + GOOGLE SHEET)
+// -------------------------------------------------------------
+
+// cover da Spotify via oEmbed
+async function fetchSpotifyCover(spotifyUrl) {
+  if (!spotifyUrl) return null;
+  try {
+    const apiUrl = "https://open.spotify.com/oembed?url=" + spotifyUrl;
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+    return data.thumbnail_url || null;
+  } catch (e) {
+    console.error("Errore fetchSpotifyCover:", e);
+    return null;
+  }
+}
+
+async function initData() {
+  try {
+    // 1) dati statici (name/bio/social) da releases.json
+    const res = await fetch("releases.json");
+    ARTISTS = await res.json();
+
+    // 2) releases dinamiche dal Google Sheet
+    const sheetReleases = await loadReleasesFromSheet();
+
+    // 3) unisci releases agli artisti
+    for (const key in sheetReleases) {
+      if (ARTISTS[key]) {
+        ARTISTS[key].releases = sheetReleases[key];
+      }
+    }
+
+    console.log("ARTISTS FINAL:", ARTISTS);
+  } catch (err) {
+    console.error("Errore initData:", err);
+  }
+}
+
+// legge il foglio:
+// artist_key | title | type | isrc | upc | featurefm | spotify_link | release_date
+async function loadReleasesFromSheet() {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+  const res = await fetch(url);
+  const text = await res.text();
+
+  const json = JSON.parse(text.substring(47, text.length - 2));
+  const rows = json.table.rows || [];
+
+  const releasesByArtist = {};
+
+  for (const r of rows) {
+    const c = r.c.map((x) => (x ? x.v : ""));
+
+    const [
+      artistKey,
+      title,
+      type,
+      isrc,
+      upc,
+      featurefm,
+      spotifyLink,
+      releaseDate
+    ] = c;
+
+    if (!artistKey || !title) continue;
+
+    // cover da Spotify se c'è il link
+    let cover = null;
+    if (spotifyLink) {
+      cover = await fetchSpotifyCover(spotifyLink);
+    }
+
+    if (!releasesByArtist[artistKey]) {
+      releasesByArtist[artistKey] = [];
+    }
+
+    releasesByArtist[artistKey].push({
+      title,
+      type,
+      isrc,
+      upc,
+      featurefm,
+      spotify: spotifyLink,
+      cover,
+      date: releaseDate
+    });
+  }
+
+  // ordina per data (più recente in alto)
+  Object.values(releasesByArtist).forEach((list) => {
+    list.sort((a, b) => {
+      const da = a.date ? Date.parse(a.date) : 0;
+      const db = b.date ? Date.parse(b.date) : 0;
+      return db - da;
+    });
+  });
+
+  return releasesByArtist;
+}
+
+// -------------------------------------------------------------
+// NUVOLI
+// -------------------------------------------------------------
+
 function initCloudRandomSpeed() {
   const clouds = document.querySelectorAll(".cloud, .cloud-foreground");
   clouds.forEach((cloud) => {
@@ -9,7 +145,10 @@ function initCloudRandomSpeed() {
   });
 }
 
-// HOME: click sugli artisti ------------------------------------
+// -------------------------------------------------------------
+// CLICK SUGLI ARTISTI
+// -------------------------------------------------------------
+
 let popupBackdrop, popupWindow;
 
 function initArtistsClick() {
@@ -27,14 +166,19 @@ function initArtistsClick() {
   });
 }
 
-// POPUP MUSIC --------------------------------------------------
+// -------------------------------------------------------------
+// POPUP
+// -------------------------------------------------------------
+
 function initPopup() {
   popupBackdrop = document.getElementById("artist-popup");
   popupWindow = document.getElementById("popup-window");
   if (!popupBackdrop || !popupWindow) return;
 
   const closeBtn = document.getElementById("popup-close");
-  closeBtn.addEventListener("click", closePopup);
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closePopup);
+  }
 
   popupBackdrop.addEventListener("click", (e) => {
     if (e.target === popupBackdrop) {
@@ -51,45 +195,57 @@ function openPopup(artistKey) {
   const artist = ARTISTS[artistKey];
   if (!artist) return;
 
-  // ---- NOME ARTISTA (GRANDE) ----
-  const bigName = document.getElementById("popup-artist-name-big");
-  if (bigName) bigName.textContent = artist.name || "";
+  const bigNameEl  = document.getElementById("popup-artist-name-big");
+  const bioEl      = document.getElementById("popup-artist-bio");
+  const socialBox  = document.getElementById("popup-artist-social");
+  const gridEl     = document.getElementById("popup-grid");
 
-  // ---- NOME ARTISTA (PICCOLO SOPRA LA GRIGLIA) ----
-  const nameEl = document.getElementById("popup-artist-name");
-  if (nameEl) nameEl.textContent = artist.name || "";
+  // NOME GRANDE
+  if (bigNameEl) {
+    bigNameEl.textContent = artist.name || "";
+  }
 
-  // ---- BIO ----
-  const bioEl = document.getElementById("popup-artist-bio");
-  if (bioEl) bioEl.textContent = artist.bio || "";
+  // BIO
+  if (bioEl) {
+    bioEl.textContent = artist.bio || "";
+  }
 
-  // ---- SOCIAL ----
-  const socialBox = document.getElementById("popup-artist-social");
+  // SOCIALS
   if (socialBox) {
     socialBox.innerHTML = "";
     if (artist.social) {
       Object.entries(artist.social).forEach(([platform, url]) => {
+        if (!url) return;
         const link = document.createElement("a");
         link.href = url;
         link.target = "_blank";
+        link.rel = "noopener noreferrer";
         link.textContent = platform.toUpperCase();
         socialBox.appendChild(link);
       });
     }
   }
 
-  // ---- MUSICA (GRID) ----
-  const gridEl = document.getElementById("popup-grid");
+  // GRID MUSICA
   if (!gridEl) return;
-
   gridEl.innerHTML = "";
 
   (artist.releases || []).forEach((rel) => {
     const card = document.createElement("a");
     card.className = "music-card";
-    card.href = rel.url || "#";
-    card.target = "_blank";
-    card.rel = "noopener noreferrer";
+
+    // feature.fm prioritaria
+    if (rel.featurefm) {
+      card.href = rel.featurefm;
+      card.target = "_blank";
+      card.rel = "noopener noreferrer";
+    } else if (rel.spotify) {
+      card.href = rel.spotify;
+      card.target = "_blank";
+      card.rel = "noopener noreferrer";
+    } else {
+      card.href = "#";
+    }
 
     const cover = document.createElement("div");
     cover.className = "music-cover";
@@ -118,8 +274,7 @@ function openPopup(artistKey) {
     gridEl.appendChild(card);
   });
 
-  // ---- APERTURA POPUP ----
-  document.getElementById("artist-popup").classList.add("open");
+  popupBackdrop.classList.add("open");
 }
 
 function closePopup() {
@@ -127,14 +282,13 @@ function closePopup() {
   popupBackdrop.classList.remove("open");
 }
 
-/* ---------------------------------------------------
-   BACKGROUND MOVEMENT: mouse + phone motion
---------------------------------------------------- */
+// -------------------------------------------------------------
+// MOVIMENTO SFONDO: mouse + telefono
+// -------------------------------------------------------------
 
-const bgImage = document.querySelector(".bg");
 let motionEnabled = false;
 
-// MOVIMENTO MOUSE (solo desktop)
+// mouse (desktop)
 document.addEventListener("mousemove", (e) => {
   if (!bgImage || motionEnabled) return;
 
@@ -144,7 +298,7 @@ document.addEventListener("mousemove", (e) => {
   bgImage.style.transform = `translate(${x}px, ${y}px) scale(1.05)`;
 });
 
-// MOVIMENTO TELEFONO
+// phone motion
 window.addEventListener("deviceorientation", (e) => {
   if (!motionEnabled || !bgImage) return;
 
@@ -157,15 +311,17 @@ window.addEventListener("deviceorientation", (e) => {
   bgImage.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.05)`;
 });
 
-// TOGGLE PER ATTIVARE DISPOSITIVO MOBILE
+// toggle
 function initMotionToggle() {
   const motionToggleBtn = document.getElementById("motion-toggle");
   if (!motionToggleBtn) return;
 
   motionToggleBtn.addEventListener("click", async () => {
     if (!motionEnabled) {
-      if (typeof DeviceMotionEvent !== "undefined" &&
-          typeof DeviceMotionEvent.requestPermission === "function") {
+      if (
+        typeof DeviceMotionEvent !== "undefined" &&
+        typeof DeviceMotionEvent.requestPermission === "function"
+      ) {
         try {
           const response = await DeviceMotionEvent.requestPermission();
           if (response === "granted") {
@@ -187,10 +343,12 @@ function initMotionToggle() {
   });
 }
 
-/* MENU LATERALE ----------------------------------------------- */
+// -------------------------------------------------------------
+// MENU LATERALE
+// -------------------------------------------------------------
 
 function initMenuPopup() {
-  const menuBtn = document.querySelector(".menu-button");
+  const menuBtn   = document.querySelector(".menu-button");
   const menuPopup = document.getElementById("menu-popup");
   const menuClose = document.getElementById("menu-close");
 
@@ -210,96 +368,3 @@ function initMenuPopup() {
     }
   });
 }
-
-///////////script x aggiornare
-async function loadReleasesFromSheet() {
-    const url = "https://docs.google.com/spreadsheets/d/1gDyVQ3bpzlY8EjGtr7KClyn3x5ZPU9sQJYkYclNZIOE/gviz/tq?tqx=out:json";
-
-    const res = await fetch(url);
-    const text = await res.text();
-    const json = JSON.parse(text.substring(47, text.length - 2));
-
-    const rows = json.table.rows;
-    const releasesByArtist = {};
-
-    for (const r of rows) {
-        const c = r.c.map(x => (x ? x.v : ""));
-
-        const [
-            artist_key,
-            title,
-            type,
-            isrc,
-            upc,
-            featurefm_link
-        ] = c;
-
-        let cover = null;
-        let appleLink = null;
-
-        // 🔥 Recupero automatico da Apple (ISRC se c'è)
-        if (isrc || upc) {
-            try {
-                const identifier = isrc ? `isrc=${isrc}` : `upc=${upc}`;
-                const appleRes = await fetch(`https://itunes.apple.com/lookup?${identifier}`);
-                const appleData = await appleRes.json();
-
-                if (appleData.results?.length > 0) {
-                    const item = appleData.results[0];
-
-                    // COVER HD AUTOMATICA (1000x1000)
-                    if (item.artworkUrl100) {
-                        cover = item.artworkUrl100.replace("100x100", "1000x1000");
-                    }
-
-                    // LINK APPLE UNIVERSALE
-                    appleLink = item.trackViewUrl || item.collectionViewUrl || null;
-                }
-            } catch (err) {
-                console.error("Errore Apple API UPC/ISRC:", err);
-            }
-        }
-
-        if (!releasesByArtist[artist_key]) releasesByArtist[artist_key] = [];
-
-        releasesByArtist[artist_key].push({
-            title,
-            type,
-            isrc,
-            upc,
-            cover,
-            featurefm: featurefm_link,
-            links: {
-                featurefm: featurefm_link,
-                apple: appleLink
-            }
-        });
-    }
-
-    return releasesByArtist;
-}
-
-let ARTISTS = {};
-
-window.addEventListener("load", async () => {
-    // 1) carica dati fissi
-    const res = await fetch("releases.json");
-    ARTISTS = await res.json();
-
-    // 2) carica releases dinamiche dal Google Sheet
-    const sheetReleases = await loadReleasesFromSheet();
-
-    // 3) unisci releases dinamiche agli artisti permanenti
-    for (const key in sheetReleases) {
-        if (ARTISTS[key]) {
-            ARTISTS[key].releases = sheetReleases[key];
-        }
-    }
-
-    console.log("ARTISTS FINAL:", ARTISTS);
-
-    // ora puoi inizializzare il resto del sito
-    initCloudRandomSpeed();
-    initArtistsClick();
-    initPopup();
-});

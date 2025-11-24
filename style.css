@@ -8,6 +8,9 @@
 html,
 body {
   height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #000; /* fallback */
 }
 
 body {
@@ -24,39 +27,33 @@ body {
 }
 
 /* SFONDO ------------------------------------------------------ */
-
+/* layer di sfondo fissato a tutto schermo */
 .background-layer {
   position: fixed;
   inset: 0;
-  z-index: -3;
   overflow: hidden;
+  z-index: 0; /* niente valori negativi, così iOS non lo nasconde */
 }
 
+/* l'IMG .bg-image fa da sfondo, si muove con il JS */
 .bg-image {
+  position: fixed;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover;                 /* pieno schermo su tutti i device */
   filter: blur(1px) brightness(0.9);
   transform: scale(1.05);
-  transition: transform 0.1s linear;
+  transition: transform 0.1s linear; /* per il movimento mouse/telefono */
 }
 
-.bg {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: -3;
-    filter: blur(3px);
-}
-
+/* NUVOLI BACKGROUND */
 
 .clouds {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: -2;
+  z-index: 1; /* davanti allo sfondo, dietro a tutto il resto */
 }
 
 .cloud {
@@ -75,7 +72,7 @@ body {
   right: -120px;
 }
 
-/* ANIMAZIONE NUVOLI (background + foreground) */
+/* animazione nuvole */
 .cloud,
 .cloud-foreground {
   animation-name: cloudMove;
@@ -87,12 +84,8 @@ body {
 }
 
 @keyframes cloudMove {
-  from {
-    transform: translateX(-30px);
-  }
-  to {
-    transform: translateX(50px);
-  }
+  from { transform: translateX(-30px); }
+  to   { transform: translateX(50px);  }
 }
 
 /* LAYER PRINCIPALE -------------------------------------------- */
@@ -229,7 +222,6 @@ body {
   line-height: 1;
   color: #000000;
   text-align: center;
-  /* numeri grandi ma responsive */
   font-size: clamp(180px, 26vw, 420px);
 }
 
@@ -246,15 +238,26 @@ body {
 
 .artist-photo img {
   display: block;
-  height: 70vh;
   width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 70vh;         /* limite verticale, ma non fissa */
   object-fit: contain;
 }
 
 @media (max-width: 900px) {
   .artist-photo img {
-    height: 60vh;
+    max-height: 60vh;       /* un po' più piccola su mobile */
+    max-width: 80vw;        /* così in orizzontale si restringe invece di tagliarsi */
   }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .artist-photo img {
+    max-height: 50vh;
+    max-width: 70vw;
+  }
+}
+
 }
 
 /* NUVOLI IN PRIMO PIANO (davanti ai piedi / testa) */
@@ -267,7 +270,7 @@ body {
 
 .cloud-foreground-left {
   left: 6%;
-  bottom: 12%;
+  bottom: 8%;
 }
 
 .cloud-foreground-right {
@@ -394,40 +397,6 @@ body {
   gap: 16px;
 }
 
-.popup-artist-name-big {
-  font-size: 32px;
-  font-weight: bold;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.25em;
-  margin-bottom: 10px;
-}
-
-.popup-section-title {
-  margin-top: 30px;
-  font-size: 16px;
-  font-weight: bold;
-  color: white;
-  letter-spacing: 0.20em;
-  text-transform: uppercase;
-}
-
-.popup-artist-bio {
-  color: #cccccc;
-  font-size: 15px;
-  line-height: 1.4em;
-  white-space: pre-line;
-}
-
-.popup-artist-social a {
-  display: inline-block;
-  margin-right: 14px;
-  color: white;
-  font-size: 15px;
-  text-decoration: underline;
-}
-
-
 @media (max-width: 1100px) {
   .popup-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -444,6 +413,45 @@ body {
   .popup-grid {
     grid-template-columns: 1fr;
   }
+}
+/* HEADER ARTISTA NEL POPUP (nome + bio + social) */
+
+/* nome grande */
+.popup-artist-name-big {
+  font-family: "Arial Black", Arial, sans-serif;
+  font-size: 26px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 16px;
+}
+
+/* titoli sezioni (BIO / SOCIALS) */
+.popup-section-header {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 16px 0 4px 0;
+}
+
+.popup-artist-bio {
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.popup-artist-social a {
+  margin-right: 12px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+.popup-artist-social a:hover {
+  opacity: 1;
+  text-decoration: underline;
 }
 
 /* card singolo/album */
@@ -577,66 +585,13 @@ body {
 .motion-toggle {
   position: fixed;
   bottom: 16px;
-  right: 16px;
+  right: 14px;
   padding: 8px 16px;
   background: none;
   color: #fff;
-  border-radius: 0px;
+  border-radius: 1px;
   font-size: 12px;
   font-family: Arial;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1.4px solid rgba(255, 255, 255, 0.7);
   z-index: 9999;
-}
-/* Overlay interno */
-.platform-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.65);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 999999;
-}
-
-/* attivo */
-.platform-overlay.active {
-  display: flex;
-}
-
-/* contenitore copertina */
-.platform-overlay-cover {
-  position: relative;
-  width: 70%;
-  max-width: 360px;
-  border-radius: 14px;
-  overflow: hidden;
-  filter: brightness(0.85); /* oscurata meno rispetto al resto */
-}
-
-/* immagine */
-.platform-overlay-cover img {
-  width: 100%;
-  display: block;
-}
-
-/* bottoni piattaforme */
-.platform-overlay-buttons {
-  position: absolute;
-  bottom: 12px;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-}
-
-/* stile bottoni */
-.platform-overlay-buttons a {
-  padding: 8px 14px;
-  background: white;
-  color: black;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  text-decoration: none;
 }
