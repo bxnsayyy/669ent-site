@@ -333,11 +333,11 @@ function initMotionToggle() {
         }
       } else {
         motionEnabled = true;
-        motionToggleBtn.textContent = "MOTION: OFF";
+        motionToggleBtn.textContent = "MOTION: ON";
       }
     } else {
       motionEnabled = false;
-      motionToggleBtn.textContent = "MOTION: ON";
+      motionToggleBtn.textContent = "MOTION: OFF";
       bgImage.style.transform = "scale(1.05)";
     }
   });
